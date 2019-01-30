@@ -73,10 +73,32 @@ function WaitUntilServices($searchString, $status) {
     }
 }
 
+function New-Daemon {
+
+    param(
+        # Current daemon passed in
+        [Parameter(Mandatory = $true)]
+        [PSCustomObject]
+        $Daemon
+    )
+
+    $service = Get-Service -Name $Daemon.name -ErrorAction SilentlyContinue
+
+    Write-Information "Couldn't find any daemon with name $($service.name)..."
+
+    $binaryPath = Join-Path -ChildPath $Daemon.destinationFolderName -ChildPath $Daemon.exeName
+
+    $service = New-Service -Name $Daemon.name -BinaryPathName $binaryPath  -DisplayName $Daemon.displayName -StartupType Automatic  
+
+    Write-Information "Created daemon: $($service.name)..."
+
+
+
+}
 
 Workflow Stop-Daemon {
     param(
-        # Service Name
+        # Current Deamon passed in
         [Parameter(Mandatory = $true)]
         [PSCustomObject]
         $Daemon
@@ -89,10 +111,8 @@ Workflow Stop-Daemon {
 
             if ($null -eq $service) {
 
-                $binaryPath = Join-Path -ChildPath $Daemon.destinationFolderName -ChildPath $Daemon.exeName
-
-                $service =  New-Service -Name $Daemon.name -BinaryPathName $binaryPath  -DisplayName $Daemon.displayName -StartupType Automatic  
-
+                Write-Information "Couldn't find service with name $($Daemon.name)..."
+                return $service 
             }
 
             $service.WaitForStatus('Stopped', '00:00:10') 
@@ -124,6 +144,7 @@ function Copy-DaemonFiles {
     )
 
     $tempFolderName = 'C:/Temp/filesToCopy'
+
     Expand-Archive $Source -DestinationPath $tempFolderName
     
     if ($CopyAppSetting) {
@@ -151,28 +172,37 @@ workflow Start-ProcessProject {
         $ArtifactsFolder
     )
 
-    ForEach -Parallel ($project in $Projects) {
+    ForEach -Parallel ($currentProject in $Projects) {
            
         inlineScript {
         
+            $project = $Using:currentProject
+
+            # Combine the artifact folder with source folder to get the whole path to the zip file.
             $sourceFolder = Join-Path -Path $ArtifactsFolder -ChildPath $project.sourceFolderName
 
-            Stop-Daemon -ServiceName $project.name 
-            
+            $service = Stop-Daemon -ServiceName $project.name 
+           
+            if ($null -eq $service) {
+
+                # if the daemon doesn't exist create it. 
+                New-Daemon -Daemon $project;
+            }
+
             Copy-DaemonFiles -Source $sourceFolder -Destination $project.destinationFolderName CopyAppSetting:$project.CopyAppsetting
         
-            Run-Migration -DatabaseName $project.dataBaseName
+            #Run-Migration -DatabaseName $project.dataBaseName
             # ToDo Change-Appsetting
         
-            Start-Daemon -ServiceName $project.name 
+            #Start-Daemon -ServiceName $project.name 
             # The commands run in parallel on each disk.
         
      
-            "Processing project: $($Using:project.name)..."
+            "Processing project: $($project.name)..."
         }
     }
     
 }
 
 
-Export-ModuleMember -Function Connect-Azure, Get-Artifact, Get-ConfigurationObject, Stop-Daemon, Start-ProcessProject, Copy-DaemonFiles
+Export-ModuleMember -Function Connect-Azure, Get-Artifact, Get-ConfigurationObject, Stop-Daemon, Start-ProcessProject, Copy-DaemonFiles, New-Daemon
