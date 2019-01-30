@@ -82,47 +82,46 @@ function New-Daemon {
         $Daemon
     )
 
-    $service = Get-Service -Name $Daemon.name -ErrorAction SilentlyContinue
+    Write-Information "Couldn't find any daemon with name $($Daemon.name)..."
 
-    Write-Information "Couldn't find any daemon with name $($service.name)..."
-
-    $binaryPath = Join-Path -ChildPath $Daemon.destinationFolderName -ChildPath $Daemon.exeName
+    $binaryPath = Join-Path -Path $Daemon.destinationFolderName -ChildPath $Daemon.exeName
 
     $service = New-Service -Name $Daemon.name -BinaryPathName $binaryPath  -DisplayName $Daemon.displayName -StartupType Automatic  
 
     Write-Information "Created daemon: $($service.name)..."
 
-
+    return $service 
 
 }
 
-Workflow Stop-Daemon {
+function Stop-Daemon {
     param(
         # Current Deamon passed in
         [Parameter(Mandatory = $true)]
         [PSCustomObject]
         $Daemon
     )
-    InlineScript {
 
-        Try {
+    Try {
 
-            $service = Get-Service -Name $Daemon.name -ErrorAction SilentlyContinue
+        $service = Get-Service -Name $Daemon.name -ErrorAction SilentlyContinue
 
-            if ($null -eq $service) {
+            
+        if ($null -eq $service) {
 
-                Write-Information "Couldn't find service with name $($Daemon.name)..."
-                return $service 
-            }
-
-            $service.WaitForStatus('Stopped', '00:00:10') 
+            Write-Information "Couldn't find service with name $($Daemon.name)..."
+            return "Service does not exist" 
         }
-        Catch {
 
-            Break
-        }
+        $service.Stop()
+
+        $service.WaitForStatus('Stopped', '00:00:10') 
 
     }
+    Catch {
+
+    }
+
 }
 
 function Copy-DaemonFiles {
@@ -145,64 +144,59 @@ function Copy-DaemonFiles {
 
     $tempFolderName = 'C:/Temp/filesToCopy'
 
-    Expand-Archive $Source -DestinationPath $tempFolderName
+    Expand-Archive $Source -DestinationPath $tempFolderName -Force
     
     if ($CopyAppSetting) {
-        $itemsToCopy = Get-ChildItem -Path $tempFolderName -Recurse 
+        
+        Copy-Item -path $tempFolderName -Destination $Destination  -Force -Recurse   
     }
     else {
+        
+        Copy-Item -path $tempFolderName  -Destination $Destination  -Force -Recurse  -Exclude "appsettings.json"
          
-        $itemsToCopy = Get-ChildItem -Path $tempFolderName -Recurse -Exclude "*appsettings*.json"; 
     }
 
-    $itemsToCopy | Copy-Item -Destination $Destination
-
+    Remove-Item -Path $tempFolderName -Confirm:$false -Force -Recurse
 }
 
-workflow Start-ProcessProject {
-    param (
 
-        [Parameter(Mandatory = $true)]
-        [PSCustomObject[]]
-        $Projects,
+function Join-BasePathAndDestination {
 
-        [Parameter(Mandatory = $true)]
-        [ValidateScript( {Test-Path $_ })]
+    param(
+        [ValidateSet("daemon", "api")]
         [string]
-        $ArtifactsFolder
+        $type,
+
+        # The destination where the files are copied to
+        [Parameter(Mandatory = $true)]
+        [String]
+        $Destination
     )
 
-    ForEach -Parallel ($currentProject in $Projects) {
-           
-        inlineScript {
-        
-            $project = $Using:currentProject
+    $configuration = Get-ConfigurationObject -ConfigFilePath './config.json'
 
-            # Combine the artifact folder with source folder to get the whole path to the zip file.
-            $sourceFolder = Join-Path -Path $ArtifactsFolder -ChildPath $project.sourceFolderName
+    Join-Path -Path $configuration.$type.basePath -ChildPath $Destination
 
-            $service = Stop-Daemon -ServiceName $project.name 
-           
-            if ($null -eq $service) {
-
-                # if the daemon doesn't exist create it. 
-                New-Daemon -Daemon $project;
-            }
-
-            Copy-DaemonFiles -Source $sourceFolder -Destination $project.destinationFolderName CopyAppSetting:$project.CopyAppsetting
-        
-            #Run-Migration -DatabaseName $project.dataBaseName
-            # ToDo Change-Appsetting
-        
-            #Start-Daemon -ServiceName $project.name 
-            # The commands run in parallel on each disk.
-        
-     
-            "Processing project: $($project.name)..."
-        }
-    }
-    
 }
 
 
-Export-ModuleMember -Function Connect-Azure, Get-Artifact, Get-ConfigurationObject, Stop-Daemon, Start-ProcessProject, Copy-DaemonFiles, New-Daemon
+function Get-DestinationFolder {
+    param(
+        [Parameter(Mandatory = $true)]
+        [PSCustomObject]
+        $Project,
+
+        #The source where the files are copied from  
+        [Parameter(Mandatory = $true)]
+        [String]
+        $basePath
+
+    )
+
+    Join-Path -Path 
+
+}
+
+
+
+Export-ModuleMember -Function Connect-Azure, Get-Artifact, Get-ConfigurationObject, Stop-Daemon, Copy-DaemonFiles, New-Daemon, Join-BasePathAndDestination

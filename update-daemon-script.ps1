@@ -1,12 +1,13 @@
-Set-StrictMode Latest
+Set-StrictMode -Version Latest
 $ErrorActionPreference = 'SilentlyContinue' 
 Write-Verbose "Installing modules..."
-import-module flintgroup -Verbose
+$root = $PSScriptRoot
+#Todo Change this to flintgroup later
+import-module "../flintgroup" -Verbose
 
-$configuration = Get-ConfigurationObject -ConfigFilePath './config.json'
+$configuration = Get-ConfigurationObject -ConfigFilePath "$root/config.json"
 
-if(!configuration)
-{
+if ( $null -eq $configuration) {
     Write-Error "No configuration found, aborting installation... "
     return;
 }
@@ -18,21 +19,25 @@ Write-Information "Successfully logged in to Azure"
 
 
 # Set variables from config 
-$feed                      = $configuration.daemon.feed
+$feed = $configuration.daemon.feed
 $daemonArtifactsSourcePath = $configuration.daemon.artifactsSourcePath;
-$name                      = $configuration.daemon.name
-$organisation              = $configuration.daemon.organisation
-$version                   = $configuration.daemon.version
-$projects                  = $configuration.daemon.projects
+$name = $configuration.daemon.name
+$organisation = $configuration.daemon.organisation
+$version = $configuration.daemon.version
+$projects = $configuration.daemon.projects
 
 # Download artifacts files and place them in $daemonArtifactsSourcePath
-Get-Artifact -Feed $feed `
-             -ArtifactsSourcePath $daemonArtifactsSourcePath `
-             -Name $name `
-             -Organisation $organisation `
-             -Version $version
+# Get-Artifact -Feed $feed `
+#     -ArtifactsSourcePath $daemonArtifactsSourcePath `
+#     -Name $name `
+#     -Organisation $organisation `
+#     -Version $version
 
-Start-ProcessProject -Projects $projects -ArtifactsFolder $daemonArtifactsSourcePath
+. "$root\start-processdaemon-workflow.ps1"             
+
+Set-PSBreakpoint -Script "$root\start-processdaemon-workflow.ps1" -Line 21 
+
+Start-ProcessDaemons -Projects $projects -ArtifactsFolder $daemonArtifactsSourcePath
 
 Write-Verbose "Fetched configuration..."
  

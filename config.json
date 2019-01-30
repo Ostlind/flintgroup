@@ -5,6 +5,9 @@
         "projectName": "Mom Services"
     },
     "api": {
+
+        
+        "basePath": "C:\\inetpub\\wwwroot",
         "artifactsSourcePath": "C:\\inetpub\\wwwroot\\drop",
         "feed": "ArtifactsFeed",
         "organisation": "https://722610.visualstudio.com/",
@@ -16,7 +19,7 @@
                 "copyAppSetting": false,
                 "projectName": "Af.Mom.Services.Executor.Api",
                 "sourceFolderName": "Af.Mom.Services.Executor.Api.zip",
-                "destinationFolderName": "C:\\inetpub\\wwwroot\\executor",
+                "destinationFolderName": "executor",
                 "group": "executor"
             },
             {
@@ -24,7 +27,7 @@
                 "copyAppSetting": false,
                 "projectName": "Af.Mom.Services.Order.Api",
                 "sourceFolderName": "Af.Mom.Services.Order.Api.zip",
-                "destinationFolderName": "C:\\inetpub\\wwwroot\\order",
+                "destinationFolderName": "order",
                 "group": "order"
             },
             {
@@ -32,7 +35,7 @@
                 "copyAppSetting": false,
                 "projectName": "Af.Mom.Services.ErpGateway.Api",
                 "sourceFolderName": "Af.Mom.Services.ErpGateway.Api.zip",
-                "destinationFolder": "C:\\inetpub\\wwwroot\\erpgateway",
+                "destinationFolder": "erpgateway",
                 "group": "gateway"
             },
             {
@@ -40,12 +43,13 @@
                 "copyAppSetting": false,
                 "projectName": "Af.Mom.Services.Dispatch.Api",
                 "sourceFolderName": "Af.Mom.Services.Dispatch.Api.zip",
-                "destinationFolderName": "C:\\inetpub\\wwwroot\\dispatch",
+                "destinationFolderName": "dispatch",
                 "group": "dispatch"
             }
         ]
     },
     "daemon": {
+        "basePath" : "C:\\MomServices",
         "artifactsSourcePath": "C:\\MomServices\\artifacts\\drop",
         "feed": "ArtifactsFeed",
         "organisation": "https://722610.visualstudio.com/",
@@ -57,7 +61,7 @@
                 "copyAppSetting": false,
                 "projectName": "Af.Mom.Services.Executor.Daemon",
                 "sourceFolderName": "Af.Mom.Services.Executor.Daemon.zip",
-                "destinationFolderName": "C:\\MomServices\\Executor\\bin",
+                "destinationFolderName": "executor\\bin",
                 "exeName" : "Af.Mom.Services.Executor.Daemon.exe",
                 "group": "executor",
                 "displayName": "AF MOM Services - Executor"
@@ -67,7 +71,7 @@
                 "copyAppSetting": false,
                 "projectName": "Af.Mom.Services.Order.Daemon",
                 "sourceFolderName": "Af.Mom.Services.Order.Daemon.zip",
-                "destinationFolderName": "C:\\MomServices\\Order\\bin",
+                "destinationFolderName": "order\\bin",
                 "exePath" : "Af.Mom.Services.Executor.Daemon.exe",
                 "group": "order",
                 "displayName": "AF MOM Services - Order"
@@ -78,7 +82,7 @@
                 "copyAppSetting": false,
                 "projectName": "Af.Mom.Services.ProcessGateway.Daemon",
                 "sourceFolderName": "Af.Mom.Services.ProcessGateway.Daemon.zip",
-                "destinationFolderName": "C:\\MomServices\\ProcessGateway\\bin",
+                "destinationFolderName": "processGateway\\bin",
                 "exePath" : "Af.Mom.Services.ProcessGateway.Daemon.exe",
                 "group": "gateway",
                 "displayName": "AF MOM Services - ProcessGateway"
@@ -88,7 +92,7 @@
                 "copyAppSetting": false,
                 "projectName": "Af.Mom.Services.Dispatch.Daemon",
                 "sourceFolderName": "Af.Mom.Services.Dispatch.Daemon.zip",
-                "destinationFolderName": "C:\\MomServices\\Dispatch\\bin",
+                "destinationFolderName": "dispatch\\bin",
                 "exePath" : "Af.Mom.Services.Dispatch.Daemon.exe",
                 "group": "dispatch",
                 "displayName": "AF MOM Services - Dispatch"
