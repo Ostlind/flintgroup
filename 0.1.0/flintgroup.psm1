@@ -142,21 +142,33 @@ function Copy-DaemonFiles {
 
     )
 
-    $tempFolderName = 'C:/Temp/filesToCopy'
+    $tempFolderName = 'C:\Temp\filesToCopy'
+
 
     Expand-Archive $Source -DestinationPath $tempFolderName -Force
     
-    if ($CopyAppSetting) {
+    if ($CopyAppSetting.IsPresent) {
         
-        Copy-Item -path $tempFolderName -Destination $Destination  -Force -Recurse   
+
+        if(!(Test-Path -Path $Destination))
+        {
+            New-Item -Path $Destination -Force
+        }
+
+        Copy-Item "$tempFolderName" -Destination "$Destination\"  -Recurse
     }
     else {
+       
+        if(!(Test-Path -Path $Destination))
+        {
+            New-Item -Path $Destination -Force -ItemType Directory
+        }
+
+        Copy-Item  $tempFolderName\* -Destination "$Destination\" -Exclude "appsettings.json" -Recurse
         
-        Copy-Item -path $tempFolderName  -Destination $Destination  -Force -Recurse  -Exclude "appsettings.json"
-         
     }
 
-    Remove-Item -Path $tempFolderName -Confirm:$false -Force -Recurse
+    Remove-Item -Path $tempFolderName\* -Confirm:$false -Force -Recurse
 }
 
 
