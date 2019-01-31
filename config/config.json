@@ -15,37 +15,40 @@
         "version": "0.1.0",
         "projects": [
             {
-                "name": "",
+                "name": "executor",
                 "copyAppSetting": false,
                 "projectName": "Af.Mom.Services.Executor.Api",
                 "sourceFolderName": "Af.Mom.Services.Executor.Api.zip",
                 "destinationFolderName": "executor",
                 "group": "executor", 
-                "applicationPool": "defaulAppPool"
+                "applicationPool": "defaultAppPool"
             },
             {
-                "name": "",
+                "name": "order",
                 "copyAppSetting": false,
                 "projectName": "Af.Mom.Services.Order.Api",
                 "sourceFolderName": "Af.Mom.Services.Order.Api.zip",
                 "destinationFolderName": "order",
-                "group": "order"
+                "group": "order", 
+                "applicationPool": "defaultAppPool"
             },
             {
-                "name": "",
+                "name": "erpgateway",
                 "copyAppSetting": false,
                 "projectName": "Af.Mom.Services.ErpGateway.Api",
                 "sourceFolderName": "Af.Mom.Services.ErpGateway.Api.zip",
                 "destinationFolder": "erpgateway",
-                "group": "gateway"
+                "group": "gateway", 
+                "applicationPool": "defaultAppPool"
             },
             {
-                "name": "",
+                "name": "dispatch",
                 "copyAppSetting": false,
                 "projectName": "Af.Mom.Services.Dispatch.Api",
                 "sourceFolderName": "Af.Mom.Services.Dispatch.Api.zip",
                 "destinationFolderName": "dispatch",
-                "group": "dispatch"
+                "group": "dispatch", 
+                "applicationPool": "defaultAppPool"
             }
         ]
     },

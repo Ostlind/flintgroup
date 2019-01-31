@@ -1,12 +1,18 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'SilentlyContinue' 
 Write-Verbose "Installing modules..."
-$root = $PSScriptRoot
-#Todo Change this to flintgroup later
-import-module "../flintgroup" -Verbose
+$root = Split-Path  $PSScriptRoot -Parent
 
-$configuration = Get-ConfigurationObject -ConfigFilePath "$root/config.json"
+#Import modules. 
+#Todo Change this to flintgroup later.
+Import-Module "$root" -Verbose -Global
+Import-Module WebAdministration -Verbose -Global
 
+# Load the configuration file.
+$configuration = Get-ConfigurationObject -ConfigFilePath "$root/config/config.json"
+
+
+# If configuration is null abort script. 
 if ( $null -eq $configuration) {
     Write-Error "No configuration found, aborting installation... "
     return;
@@ -28,15 +34,13 @@ $projects = $configuration.api.projects
 
 # Download artifacts files and place them in $daemonArtifactsSourcePath
 Get-Artifact -Feed $feed `
-    -ArtifactsSourcePath $daemonArtifactsSourcePath `
+    -ArtifactsSourcePath $apiArtifactsSourcePath `
     -Name $name `
     -Organisation $organisation `
     -Version $version
 
-. "$root\start-processdaemon-workflow.ps1"             
 
-Set-PSBreakpoint -Script "$root\start-processdaemon-workflow.ps1" -Line 21 
-
+# Start processing/installing the Apis.  
 Start-ProcessApis -Projects $projects -ArtifactsFolder $apiArtifactsSourcePath
 
 Write-Verbose "Fetched configuration..."

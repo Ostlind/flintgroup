@@ -192,6 +192,21 @@ function Join-BasePathAndDestination {
 }
 
 
+function Get-DefaultTypeConfiguration {
+
+    param(
+        [ValidateSet("daemon", "api")]
+        [PSCustomObject]
+        $type
+
+    )
+
+    $configuration = Get-ConfigurationObject -ConfigFilePath './config.json'
+
+    return $configuration.$type
+}
+
+
 
 
 
@@ -216,17 +231,22 @@ function Start-ProcessApis {
             # Combine the artifact folder with source folder to get the whole path to the zip file.
             $sourceFolder = Join-Path -Path $ArtifactsFolder -ChildPath $project.sourceFolderName
 
-
             "project name: $($project.name)..."
             "source folder: $($sourceFolder)..."
             "artifacts folder: $($ArtifactsFolder)..."
 
 
-            $destination = Join-BasePathAndDestination -type daemon -Destination $project.destinationFolderName  
+            $destination = Join-BasePathAndDestination -type api -Destination $project.destinationFolderName  
 
             Copy-ProjectFiles -Source $sourceFolder -Destination $destination -CopyAppSetting:$project.CopyAppsetting
 
 
+            $webApplication = Get-WebApplication
+
+            if($webApplication -eq "WebApplication does not exist")
+            {
+                $webApplication = New-ApiWebApplication -apiProject $project -SiteName 'Default Web Site'
+            }
         
             #Run-Migration -DatabaseName $project.dataBaseName
             # ToDo Change-Appsetting
@@ -239,7 +259,31 @@ function Start-ProcessApis {
         }
 
 }
+function Get-ApiWebApplication {
 
+    param(
+        # Current Deamon passed in
+        [Parameter(Mandatory = $true)]
+        [PSCustomObject]
+        $ApiApplication
+    )
+
+
+    $webApplication = Get-WebApplication -Name $ApiApplication.name
+
+    if($null -eq $webApplication)
+    {
+        Write-Information "Couldn't find a webapplication with name $($ApiApplication.name)..."
+        return "WebApplication does not exist..." 
+    }
+
+    $webApplication
+
+
+
+
+
+}
 function New-ApiWebApplication { 
 
     param(
@@ -253,12 +297,11 @@ function New-ApiWebApplication {
         $SiteName 
     )
 
-    
-    
    $physicalPath = Join-BasePathAndDestination -type api -Destination $project.destinationFolderName  
    
-   New-WebApplication -Name $apiProject.Name -Site $SiteName -PhysicalPath $physicalPath -ApplicationPool $apiProject.applicationPool  
+   $webApplication = New-WebApplication -Name $apiProject.Name -Site $SiteName -PhysicalPath $physicalPath -ApplicationPool $apiProject.applicationPool  
 
+   return $webApplication
 
 }
 
@@ -316,4 +359,4 @@ function Start-ProcessDaemons {
 
 }
 
-Export-ModuleMember -Function Connect-Azure, Get-Artifact, Get-ConfigurationObject, Stop-Daemon, Copy-ProjectFiles, New-Daemon, Join-BasePathAndDestination,Start-ProcessApis, Start-ProcessDaemons 
+Export-ModuleMember -Function Connect-Azure, Get-Artifact, Get-ConfigurationObject, Stop-Daemon, Copy-ProjectFiles, New-Daemon, Join-BasePathAndDestination,Start-ProcessApis, Start-ProcessDaemons, Get-DefaultTypeConfiguration
