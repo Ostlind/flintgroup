@@ -124,7 +124,7 @@ function Stop-Daemon {
 
 }
 
-function Copy-DaemonFiles {
+function Copy-ProjectFiles {
 
     param(
         #The source where the files are copied from  
@@ -192,23 +192,128 @@ function Join-BasePathAndDestination {
 }
 
 
-function Get-DestinationFolder {
-    param(
-        [Parameter(Mandatory = $true)]
-        [PSCustomObject]
-        $Project,
 
-        #The source where the files are copied from  
-        [Parameter(Mandatory = $true)]
-        [String]
-        $basePath
 
+
+function Start-ProcessApis {
+    param (
+
+        [Parameter(Mandatory = $true)]
+        [PSCustomObject[]]
+        $Projects,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateScript( {Test-Path $_ })]
+        [string]
+        $ArtifactsFolder
     )
 
-    Join-Path -Path 
+ $Projects | ForEach-Object  {
+
+
+            $project = $_
+
+            # Combine the artifact folder with source folder to get the whole path to the zip file.
+            $sourceFolder = Join-Path -Path $ArtifactsFolder -ChildPath $project.sourceFolderName
+
+
+            "project name: $($project.name)..."
+            "source folder: $($sourceFolder)..."
+            "artifacts folder: $($ArtifactsFolder)..."
+
+
+            $destination = Join-BasePathAndDestination -type daemon -Destination $project.destinationFolderName  
+
+            Copy-ProjectFiles -Source $sourceFolder -Destination $destination -CopyAppSetting:$project.CopyAppsetting
+
+
+        
+            #Run-Migration -DatabaseName $project.dataBaseName
+            # ToDo Change-Appsetting
+        
+            #Start-Daemon -ServiceName $project.name 
+            # The commands run in parallel on each disk.
+        
+     
+            "Processing project: $($project.name)..."
+        }
 
 }
 
+function New-ApiWebApplication { 
+
+    param(
+        [Parameter(Mandatory = $true)]
+        [PSCustomObject]
+        $apiProject,
+
+        # Default site name
+        [Parameter(Mandatory=$false)]
+        [string]
+        $SiteName 
+    )
+
+    
+    
+   $physicalPath = Join-BasePathAndDestination -type api -Destination $project.destinationFolderName  
+   
+   New-WebApplication -Name $apiProject.Name -Site $SiteName -PhysicalPath $physicalPath -ApplicationPool $apiProject.applicationPool  
 
 
-Export-ModuleMember -Function Connect-Azure, Get-Artifact, Get-ConfigurationObject, Stop-Daemon, Copy-DaemonFiles, New-Daemon, Join-BasePathAndDestination
+}
+
+function Start-ProcessDaemons {
+    param (
+
+        [Parameter(Mandatory = $true)]
+        [PSCustomObject[]]
+        $Projects,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateScript( {Test-Path $_ })]
+        [string]
+        $ArtifactsFolder
+    )
+
+ $Projects | ForEach-Object  {
+
+
+            $project = $_
+
+            # Combine the artifact folder with source folder to get the whole path to the zip file.
+            $sourceFolder = Join-Path -Path $ArtifactsFolder -ChildPath $project.sourceFolderName
+
+
+            "project name: $($project.name)..."
+            "source folder: $($sourceFolder)..."
+            "artifacts folder: $($ArtifactsFolder)..."
+
+            $service = $null
+
+            $service = Stop-Daemon -Daemon $project 
+           
+            if ("Service does not exist" -eq $service) {
+
+                # if the daemon doesn't exist create it. 
+              $service =  New-Daemon -Daemon $project;
+            }
+
+            $destination = Join-BasePathAndDestination -type daemon -Destination $project.destinationFolderName  
+
+            Copy-ProjectFiles -Source $sourceFolder -Destination $destination -CopyAppSetting:$project.CopyAppsetting
+
+
+        
+            #Run-Migration -DatabaseName $project.dataBaseName
+            # ToDo Change-Appsetting
+        
+            #Start-Daemon -ServiceName $project.name 
+            # The commands run in parallel on each disk.
+        
+     
+            "Processing project: $($project.name)..."
+        }
+
+}
+
+Export-ModuleMember -Function Connect-Azure, Get-Artifact, Get-ConfigurationObject, Stop-Daemon, Copy-ProjectFiles, New-Daemon, Join-BasePathAndDestination,Start-ProcessApis, Start-ProcessDaemons 
