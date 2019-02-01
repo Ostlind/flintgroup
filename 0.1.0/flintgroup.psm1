@@ -105,7 +105,6 @@ function Stop-Daemon {
     Try {
 
         $service = Get-Service -Name $Daemon.name -ErrorAction SilentlyContinue
-
             
         if ($null -eq $service) {
 
@@ -171,7 +170,6 @@ function Copy-ProjectFiles {
     Remove-Item -Path $tempFolderName\* -Confirm:$false -Force -Recurse
 }
 
-
 function Join-BasePathAndDestination {
 
     param(
@@ -190,7 +188,6 @@ function Join-BasePathAndDestination {
     Join-Path -Path $configuration.$type.basePath -ChildPath $Destination
 
 }
-
 
 function Get-DefaultTypeConfiguration {
 
@@ -296,6 +293,14 @@ function New-ApiWebApplication {
         [string]
         $SiteName 
     )
+
+   $apiApplication = Get-WebApplication -Name $apiProject.name 
+
+   if($null -ne $apiApplication)
+   {
+       Write-Information "Api application already exist..."
+       return
+   }
 
    $physicalPath = Join-BasePathAndDestination -type api -Destination $project.destinationFolderName  
    
