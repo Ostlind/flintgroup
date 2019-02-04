@@ -21,8 +21,8 @@ az artifacts universal download --organization "https://722610.visualstudio.com/
 az artifacts universal download --organization "https://722610.visualstudio.com/"  --feed "ArtifactsFeed" --name "flintgroup-daemon-artifact" --version "0.7.0" --path './'
 
 
-  Set-Location C:\MomServices\executor
+  Set-Location C:\MomServices\executor\bin
 
   $ef = "C:\Users\A501205\.nuget\packages\microsoft.entityframeworkcore.tools\2.2.1\tools\netcoreapp2.0\any\ef.dll"
 
-  dotnet exec --depsfile '.\Af.Mom.Services.Executor.Api.deps.json' --root-namespace 'Af.Mom.Services.Executor.Api' --assembly '.\Af.Mom.Services.Executor.Api.dll' --runtimeconfig '.\Af.Mom.Services.Executor.Api.runtimeconfig.json' 'C:\Users\A501205\.nuget\packages\microsoft.entityframeworkcore.tools\2.2.1\tools\netcoreapp2.0\any\ef.dll' database update
+  dotnet exec --depsfile '.\Af.Mom.Services.Executor.Daemon.deps.json' --runtimeconfig '.\Af.Mom.Services.Executor.Daemon.runtimeconfig.json' 'C:\Users\A501205\.nuget\packages\microsoft.entityframeworkcore.tools\2.2.1\tools\netcoreapp2.0\any\ef.dll' database update --assembly '.\Af.Mom.Services.Executor.Daemon.dll' --root-namespace 'Af.Mom.Services.Executor.Deamon' --project-dir '\.' --verbose
