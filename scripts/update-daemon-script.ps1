@@ -1,11 +1,9 @@
-Set-StrictMode -Version Latest
-$ErrorActionPreference = 'SilentlyContinue' 
-Write-Verbose "Installing modules..."
-$root = $PSScriptRoot
-#Todo Change this to flintgroup later
-import-module "../flintgroup" -Verbose
-
-$configuration = Get-ConfigurationObject -ConfigFilePath "$root/config.json"
+param(
+    # The configuration object
+    [Parameter(Mandatory = $true)]
+    [PSCustomObject]
+    $Configuration
+)
 
 if ( $null -eq $configuration) {
     Write-Error "No configuration found, aborting installation... "
@@ -18,15 +16,23 @@ Connect-Azure
 Write-Information "Successfully logged in to Azure"
 
 # Set variables from config 
-$feed = $configuration.daemon.feed
-$daemonArtifactsSourcePath = $configuration.daemon.artifactsSourcePath;
-$name = $configuration.daemon.name
-$organisation = $configuration.daemon.organisation
-$version = $configuration.daemon.version
-$projects = $configuration.daemon.projects
+$feed = $Configuration.feed
+$daemonArtifactsSourcePath = $Configuration.artifactsSourcePath;
+$name = $Configuration.name
+$organisation = $Configuration.organisation
+$version = $Configuration.version
+$projects = $Configuration.projects
+
+# Specify version of package to download
+$version = Read-Host -Prompt "Please enter package version (in format 0.0.0)"
+
+while ($version -notmatch '^\d{1}.\d{1}.\d{1}$' ) {
+
+    Write-Error "Version number '($version)' is in the wrong format. Use i.e (1.0.0)..."
+    $version = Read-Host -Prompt "Please enter package version (in format 0.0.0)..."
+}
 
 #Download artifacts files and place them in $daemonArtifactsSourcePath
-
 Get-Artifact -Feed $feed `
     -ArtifactsSourcePath $daemonArtifactsSourcePath `
     -Name $name `

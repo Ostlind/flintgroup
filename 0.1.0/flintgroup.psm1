@@ -108,8 +108,8 @@ function Stop-Daemon {
             
         if ($null -eq $service) {
 
-            Write-Information "Couldn't find service with name $($Daemon.name)..."
-            return "Service does not exist" 
+            Write-Information "Couldn't stop daemon service with name $($Daemon.name) beacuse it was not found"
+            return "Daemon service does not exist" 
         }
 
         $service.Stop()
@@ -149,8 +149,7 @@ function Copy-ProjectFiles {
     if ($CopyAppSetting.IsPresent) {
         
 
-        if(!(Test-Path -Path $Destination))
-        {
+        if (!(Test-Path -Path $Destination)) {
             New-Item -Path $Destination -Force
         }
 
@@ -158,12 +157,11 @@ function Copy-ProjectFiles {
     }
     else {
        
-        if(!(Test-Path -Path $Destination))
-        {
+        if (!(Test-Path -Path $Destination)) {
             New-Item -Path $Destination -Force -ItemType Directory
         }
 
-        Copy-Item  $tempFolderName\* -Destination "$Destination\" -Exclude "appsettings.json" -Recurse
+        Copy-Item  $tempFolderName\* -Destination "$Destination\" -Exclude "appsettings.json" -Recurse -Force 
         
     }
 
@@ -183,7 +181,7 @@ function Join-BasePathAndDestination {
         $Destination
     )
 
-    $configuration = Get-ConfigurationObject -ConfigFilePath './config.json'
+    $configuration = Get-ConfigurationObject -ConfigFilePath '../config/config.json'
 
     Join-Path -Path $configuration.$type.basePath -ChildPath $Destination
 
@@ -198,7 +196,7 @@ function Get-DefaultTypeConfiguration {
 
     )
 
-    $configuration = Get-ConfigurationObject -ConfigFilePath './config.json'
+    $configuration = Get-ConfigurationObject -ConfigFilePath './config/config.json'
 
     return $configuration.$type
 }
@@ -220,40 +218,33 @@ function Start-ProcessApis {
         $ArtifactsFolder
     )
 
- $Projects | ForEach-Object  {
+    $Projects | ForEach-Object {
 
+        $project = $_
 
-            $project = $_
+        # Combine the artifact folder with source folder to get the whole path to the zip file.
+        $sourceFolder = Join-Path -Path $ArtifactsFolder -ChildPath $project.sourceFolderName
 
-            # Combine the artifact folder with source folder to get the whole path to the zip file.
-            $sourceFolder = Join-Path -Path $ArtifactsFolder -ChildPath $project.sourceFolderName
+        Write-Information "project name: $($project.name), source folder: $sourceFolder, artifacts folder: $ArtifactsFolder"
 
-            "project name: $($project.name)..."
-            "source folder: $($sourceFolder)..."
-            "artifacts folder: $($ArtifactsFolder)..."
+        $destination = Join-BasePathAndDestination -type api -Destination $project.destinationFolderName  
 
+        Copy-ProjectFiles -Source $sourceFolder -Destination $destination -CopyAppSetting:$project.CopyAppsetting
 
-            $destination = Join-BasePathAndDestination -type api -Destination $project.destinationFolderName  
+        $webApplication = Get-ApiWebApplication -ApiApplication $project
 
-            Copy-ProjectFiles -Source $sourceFolder -Destination $destination -CopyAppSetting:$project.CopyAppsetting
+        if ($webApplication -eq "WebApplication does not exist...") {
+  
+            $webApplication = New-ApiWebApplication -apiProject $project -SiteName 'Default Web Site'
 
-
-            $webApplication = Get-WebApplication
-
-            if($webApplication -eq "WebApplication does not exist")
-            {
-                $webApplication = New-ApiWebApplication -apiProject $project -SiteName 'Default Web Site'
-            }
-        
-            #Run-Migration -DatabaseName $project.dataBaseName
-            # ToDo Change-Appsetting
-        
-            #Start-Daemon -ServiceName $project.name 
-            # The commands run in parallel on each disk.
-        
-     
-            "Processing project: $($project.name)..."
+            Write-Information "Created new web application with name: $($project.name)..."
+  
         }
+        
+        Write-Information "Done processing project: $($project.name)..."
+    }
+
+    Write-Information "Finished processing web applications"
 
 }
 function Get-ApiWebApplication {
@@ -268,17 +259,12 @@ function Get-ApiWebApplication {
 
     $webApplication = Get-WebApplication -Name $ApiApplication.name
 
-    if($null -eq $webApplication)
-    {
+    if ($null -eq $webApplication) {
         Write-Information "Couldn't find a webapplication with name $($ApiApplication.name)..."
         return "WebApplication does not exist..." 
     }
 
     $webApplication
-
-
-
-
 
 }
 function New-ApiWebApplication { 
@@ -289,24 +275,23 @@ function New-ApiWebApplication {
         $apiProject,
 
         # Default site name
-        [Parameter(Mandatory=$false)]
+        [Parameter(Mandatory = $false)]
         [string]
         $SiteName 
     )
 
-   $apiApplication = Get-WebApplication -Name $apiProject.name 
+    $apiApplication = Get-WebApplication -Name $apiProject.name 
 
-   if($null -ne $apiApplication)
-   {
-       Write-Information "Api application already exist..."
-       return
-   }
+    if ($null -ne $apiApplication) {
+        Write-Information "Api application already exist..."
+        return
+    }
 
-   $physicalPath = Join-BasePathAndDestination -type api -Destination $project.destinationFolderName  
+    $physicalPath = Join-BasePathAndDestination -type api -Destination $project.destinationFolderName  
    
-   $webApplication = New-WebApplication -Name $apiProject.Name -Site $SiteName -PhysicalPath $physicalPath -ApplicationPool $apiProject.applicationPool  
+    $webApplication = New-WebApplication -Name $apiProject.Name -Site $SiteName -PhysicalPath $physicalPath -ApplicationPool $apiProject.applicationPool  
 
-   return $webApplication
+    return $webApplication
 
 }
 
@@ -323,45 +308,76 @@ function Start-ProcessDaemons {
         $ArtifactsFolder
     )
 
- $Projects | ForEach-Object  {
+    $Projects | ForEach-Object {
 
+        $project = $_
 
-            $project = $_
+        # Combine the artifact folder with source folder to get the whole path to the zip file.
+        $sourceFolder = Join-Path -Path $ArtifactsFolder -ChildPath $project.sourceFolderName
 
-            # Combine the artifact folder with source folder to get the whole path to the zip file.
-            $sourceFolder = Join-Path -Path $ArtifactsFolder -ChildPath $project.sourceFolderName
+        Write-Information "project name: $($project.name), source folder: $sourceFolder, artifacts folder: $ArtifactsFolder"
 
+        $service = $null
 
-            "project name: $($project.name)..."
-            "source folder: $($sourceFolder)..."
-            "artifacts folder: $($ArtifactsFolder)..."
-
-            $service = $null
-
-            $service = Stop-Daemon -Daemon $project 
+        # Get the service. 
+        $service = Stop-Daemon -Daemon $project 
            
-            if ("Service does not exist" -eq $service) {
+        if ("Daemon service does not exist" -eq $service) {
 
-                # if the daemon doesn't exist create it. 
-              $service =  New-Daemon -Daemon $project;
-            }
-
-            $destination = Join-BasePathAndDestination -type daemon -Destination $project.destinationFolderName  
-
-            Copy-ProjectFiles -Source $sourceFolder -Destination $destination -CopyAppSetting:$project.CopyAppsetting
-
-
-        
-            #Run-Migration -DatabaseName $project.dataBaseName
-            # ToDo Change-Appsetting
-        
-            #Start-Daemon -ServiceName $project.name 
-            # The commands run in parallel on each disk.
-        
-     
-            "Processing project: $($project.name)..."
+            # if the daemon doesn't exist create it. 
+            $service = New-Daemon -Daemon $project;
         }
+
+        # The folder where daemons files are located.
+        $destination = Join-BasePathAndDestination -type daemon -Destination $project.destinationFolderName  
+
+        Copy-ProjectFiles -Source $sourceFolder -Destination $destination -CopyAppSetting:$project.CopyAppsetting
+
+        # Start the database migration to the latest version.
+
+        Start-Migration -DaemonProjectName $project.projectName -DaemonBinPath  $destination
+
+
+        # ToDo Change-Appsetting
+
+        # Start the daemons again. 
+        Start-Daemon -ServiceName $project.name 
+        
+    }
 
 }
 
-Export-ModuleMember -Function Connect-Azure, Get-Artifact, Get-ConfigurationObject, Stop-Daemon, Copy-ProjectFiles, New-Daemon, Join-BasePathAndDestination,Start-ProcessApis, Start-ProcessDaemons, Get-DefaultTypeConfiguration
+function Start-Migration { 
+    param(
+        # Parameter help description
+        [Parameter(Mandatory = $true)]
+        [string]
+        $DaemonNameSpace,
+    
+        [Parameter(Mandatory = $true)]
+        [ValidateScript( {Test-Path $_ })]
+        [String]
+        $DaemonBinPath
+    )
+
+    Push-Location
+
+    Write-Information "Setting location to: '$DaemonBinPath'..."
+
+    Set-Location -Path $DaemonBinPath
+
+    $depsfile = ".\$DaemonNameSpace.deps.json" 
+    $runtimeconfig = ".\$DaemonNameSpace.runtimeconfig.json" 
+    $ef = '..\artifacts\ef\ef.dll' 
+    $assembly = ".\$DaemonNameSpace.dll" 
+    ${root-namespace} = "$DaemonNameSpace" 
+    $projectDir = '\.'
+     
+    dotnet exec --depsfile $depsfile --runtimeconfig $runtimeconfig  $ef  database update --assembly $assembly --root-namespace ${root-namespace} --project-dir $projectDir --verbose    
+
+    Pop-Location
+
+    Write-Information "Setting location to: '$((Get-Location).path)'..."
+}
+
+Export-ModuleMember -Function Connect-Azure, Get-Artifact, Get-ConfigurationObject, Stop-Daemon, Copy-ProjectFiles, New-Daemon, Join-BasePathAndDestination, Start-ProcessApis, Start-ProcessDaemons, Get-DefaultTypeConfiguration, Start-Migration

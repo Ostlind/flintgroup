@@ -37,7 +37,7 @@
                 "copyAppSetting": false,
                 "projectName": "Af.Mom.Services.ErpGateway.Api",
                 "sourceFolderName": "Af.Mom.Services.ErpGateway.Api.zip",
-                "destinationFolder": "erpgateway",
+                "destinationFolderName": "erpgateway",
                 "group": "gateway", 
                 "applicationPool": "defaultAppPool"
             },
@@ -48,6 +48,15 @@
                 "sourceFolderName": "Af.Mom.Services.Dispatch.Api.zip",
                 "destinationFolderName": "dispatch",
                 "group": "dispatch", 
+                "applicationPool": "defaultAppPool"
+            },
+            {
+                "name": "Resource",
+                "copyAppSetting": false,
+                "projectName": "Af.Mom.Services.Resource.Api",
+                "sourceFolderName": "Af.Mom.Services.Resource.Api.zip",
+                "destinationFolderName": "resource",
+                "group": "resource", 
                 "applicationPool": "defaultAppPool"
             }
         ]
