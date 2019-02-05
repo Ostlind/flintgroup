@@ -53,3 +53,20 @@ $sourceFolder = Join-Path -Path "C:\MomServices\artifacts\drop" -ChildPath $proj
 $destination = Join-BasePathAndDestination -type daemon -Destination $project.destinationFolderName  
 
 Copy-ProjectFiles -Source $sourceFolder -Destination $destination -CopyAppSetting:$project.CopyAppsetting
+
+Copy-Item -Path $tempFolderName -Destination "C:\temp\newolder" -Container
+Copy-Item -Path "$tempFolderName" -Destination "C:\temp\newolder1\" -Container -Recurse
+
+Set-PSBreakpoint -Script ..\0.1.0\flintgroup.psm1 -Line 155
+Set-PSBreakpoint -Script ..\0.1.0\flintgroup.psm1 -Line 160
+Set-PSBreakpoint -Script ..\0.1.0\flintgroup.psm1 -Line 148
+
+Set-locstion C:\temp
+
+$filesToCopy = Get-ChildItem -Path $tempFolderName -Recurse -Exclude "appsettings.json"
+
+Remove-Item C:\temp\newfolder\* -Force -Confirm:$false -Recurse -Exclude "appsettings.json"
+Copy-Item "$tempFolderName\*" -Destination C:\temp\newfolder -Recurse -Container -Exclude "appsettings.json"
+
+Remove-Item C:\temp\newfolder\* -Force -Confirm:$false -Recurse 
+Copy-Item "$tempFolderName\*" -Destination C:\temp\newfolder -Recurse -Container 

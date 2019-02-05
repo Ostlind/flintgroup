@@ -17,8 +17,8 @@ Connect-Azure
 # Load the configuration file.
 $configuration = Get-ConfigurationObject -ConfigFilePath "$root\config\config.json"
 
-& '.\update-daemon-script.ps1' -Configuration $configuration.daemon
+#& '.\update-daemon-script.ps1' -Configuration $configuration.daemon
 
 & '.\update-api-script.ps1' -Configuration $configuration.api
 
-& '.\update-migration-script.ps1' -Configuration $configuration.migration
+#& '.\update-migration-script.ps1' -Configuration $configuration.migration

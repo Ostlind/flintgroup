@@ -143,30 +143,32 @@ function Copy-ProjectFiles {
 
     $tempFolderName = 'C:\Temp\filesToCopy'
 
-    if(Test-path -Path $tempFolderName)
+    if(Test-Path -Path $tempFolderName)
     {
-        Remove-Item $tempFolderName -Confirm:$false -Force
+        Remove-Item $tempFolderName -Force -Recurse
     }
 
-    Expand-Archive $Source -DestinationPath $tempFolderName -Force
+    Expand-Archive $Source -DestinationPath $tempFolderName -Force 
     
     if ($CopyAppSetting.IsPresent) {
         
-        if (!(Test-Path -Path $Destination)) {
-           
-            New-Item -Path $Destination -Force -ItemType Directory
+        if(!(Test-Path -Path $Destination))
+        {
+            New-Item -Path $Destination -ItemType Directory
         }
 
-        Get-ChildItem -Path $tempFolderName -Recurse | Copy-Item -Destination $Destination -Force
+        Remove-Item "$Destination\*" -Force -Confirm:$false -Recurse 
+        Copy-Item "$tempFolderName\*" -Destination $Destination  -Recurse -Container
     }
     else {
-       
-        if (!(Test-Path -Path $Destination)) {
-           
-            New-Item -Path $Destination -Force -ItemType Directory
+
+        if(!(Test-Path -Path $Destination))
+        {
+            New-Item -Path $Destination -ItemType Directory
         }
 
-        Get-ChildItem -Path $tempFolderName -Exclude "appsettings.json" -Recurse | Copy-Item -Destination $Destination -Force
+        Remove-Item "$Destination\*" -Force -Confirm:$false -Recurse -Exclude "appsettings.json"
+        Copy-Item "$tempFolderName\*" -Destination $Destination -Recurse -Container -Exclude "appsettings.json"
     }
 
     Remove-Item -Path $tempFolderName -Confirm:$false -Force -Recurse
