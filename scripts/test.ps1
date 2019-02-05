@@ -39,3 +39,8 @@ dotnet exec --depsfile $depsfile --runtimeconfig $runtimeconfig  $ef  database u
 
 
 Start-Migration -DaemonNameSpace 'Af.Mom.Services.Executor.Deamon' -DaemonBinPath  "C:\MomServices\executor\bin"
+
+$config = Get-ConfigurationObject -ConfigFilePath '..\config\config.json'
+
+$daemon = $config.migration.projects[0]
+$daemon.dbContexts | Start-Migration -DaemonBinPath  $(Join-Path $daemon.basePath -ChildPath $daemon.destinationFolderName) -DaemonNameSpace $daemon.projectName

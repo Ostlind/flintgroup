@@ -143,6 +143,11 @@ function Copy-ProjectFiles {
 
     $tempFolderName = 'C:\Temp\filesToCopy'
 
+    if(Test-path -Path $tempFolderName)
+    {
+        Remove-Item $tempFolderName -Confirm:$false -Force
+    }
+
     Expand-Archive $Source -DestinationPath $tempFolderName -Force
     
     if ($CopyAppSetting.IsPresent) {
@@ -151,7 +156,7 @@ function Copy-ProjectFiles {
             New-Item -Path $Destination -Force
         }
 
-        Copy-Item "$tempFolderName" -Destination "$Destination\"  -Recurse
+        Copy-Item "$tempFolderName\*" -Destination "$Destination\"  -Recurse
     }
     else {
        
@@ -159,7 +164,7 @@ function Copy-ProjectFiles {
             New-Item -Path $Destination -Force -ItemType Directory
         }
 
-        Copy-Item  $tempFolderName\* -Destination "$Destination\" -Exclude "appsettings.json" -Recurse -Force 
+        Copy-Item  "$tempFolderName\*" -Destination "$Destination\" -Exclude "appsettings.json" -Recurse -Force 
     }
 
     Remove-Item -Path $tempFolderName\* -Confirm:$false -Force -Recurse
@@ -330,13 +335,6 @@ function Start-ProcessDaemons {
 
         Copy-ProjectFiles -Source $sourceFolder -Destination $destination -CopyAppSetting:$project.CopyAppsetting
 
-        # Start the database migration to the latest version.
-
-        $project.dbContexts | Start-Migration -DaemonNameSpace $project.projectName -DaemonBinPath  $destination
-
-
-        # ToDo Change-Appsetting
-
         # Start the daemons again. 
         Start-Daemon -ServiceName $project.name 
         
@@ -372,15 +370,14 @@ function Start-Daemon {
 
     param(
         # Name of daemon/service
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string]
         $ServiceName
     )
 
     $service = Get-Service -Name $ServiceName
 
-    if($null -eq $service)
-    {
+    if ($null -eq $service) {
         Write-Error "Could not find service with name: $ServiceName..."
     }
 
@@ -401,10 +398,9 @@ function Start-Migration {
         [string]
         $DaemonBinPath,
 
-       [Parameter(Mandatory = $true,
-                  ValueFromPipeline=$true)]
-       [string]
-       $DbContextClassName
+        [Parameter(Mandatory, ValueFromPipeline)]
+        [string[]]
+        $DbContextClassName
 
 
     )
@@ -422,8 +418,13 @@ function Start-Migration {
     $assembly = ".\$DaemonNameSpace.dll" 
     ${root-namespace} = "$DaemonNameSpace" 
     $projectDir = '\.'
-     
-    dotnet exec --depsfile $depsfile --runtimeconfig $runtimeconfig  $ef  database update --assembly $assembly --root-namespace ${root-namespace} --project-dir $projectDir --context $DbContextClassName --verbose    
+
+    
+    $DbContextClassName | ForEach-Object {
+    
+        dotnet exec --depsfile $depsfile --runtimeconfig $runtimeconfig  $ef  database update --assembly $assembly --root-namespace ${root-namespace} --project-dir $projectDir --context $_ --verbose    
+
+    }
 
     Pop-Location
 

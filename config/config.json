@@ -15,10 +15,10 @@
                 "dbContexts" : [ "ResourceDbContext" ]
             },
             {
-                "basePath" : "C:\\MomServices",
-                "projectName": "Af.Mom.Services.Executor.Daemon",
-                "destinationFolderName": "executor\\bin",
-                "dbContexts" : [ "ExecutorDbContext" ]
+                "basePath": "C:\\inetpub\\wwwroot",
+                "projectName": "Af.Mom.Services.ErpGateway.Api",
+                "destinationFolderName": "erpgateway",
+                "dbContexts" : [ "ErpGatewayDbContext" ]
             },
             {
                 "basePath" : "C:\\MomServices",
@@ -61,7 +61,7 @@
         "projects": [
             {
                 "name": "executor",
-                "copyAppSetting": false,
+                "copyAppSetting": true,
                 "projectName": "Af.Mom.Services.Executor.Api",
                 "sourceFolderName": "Af.Mom.Services.Executor.Api.zip",
                 "destinationFolderName": "executor",
@@ -70,7 +70,7 @@
             },
             {
                 "name": "order",
-                "copyAppSetting": false,
+                "copyAppSetting": true,
                 "projectName": "Af.Mom.Services.Order.Api",
                 "sourceFolderName": "Af.Mom.Services.Order.Api.zip",
                 "destinationFolderName": "order",
@@ -79,7 +79,7 @@
             },
             {
                 "name": "erpgateway",
-                "copyAppSetting": false,
+                "copyAppSetting": true,
                 "projectName": "Af.Mom.Services.ErpGateway.Api",
                 "sourceFolderName": "Af.Mom.Services.ErpGateway.Api.zip",
                 "destinationFolderName": "erpgateway",
@@ -88,7 +88,7 @@
             },
             {
                 "name": "dispatch",
-                "copyAppSetting": false,
+                "copyAppSetting": true,
                 "projectName": "Af.Mom.Services.Dispatch.Api",
                 "sourceFolderName": "Af.Mom.Services.Dispatch.Api.zip",
                 "destinationFolderName": "dispatch",
@@ -97,7 +97,7 @@
             },
             {
                 "name": "resource",
-                "copyAppSetting": false,
+                "copyAppSetting": true,
                 "projectName": "Af.Mom.Services.Resource.Api",
                 "sourceFolderName": "Af.Mom.Services.Resource.Api.zip",
                 "destinationFolderName": "resource",
@@ -116,7 +116,7 @@
         "projects": [
             {
                 "name": "MOM Executor",
-                "copyAppSetting": false,
+                "copyAppSetting": true,
                 "projectName": "Af.Mom.Services.Executor.Daemon",
                 "sourceFolderName": "Af.Mom.Services.Executor.Daemon.zip",
                 "destinationFolderName": "executor\\bin",
@@ -126,7 +126,7 @@
             },
             {
                 "name": "MOM Order",
-                "copyAppSetting": false,
+                "copyAppSetting": true,
                 "projectName": "Af.Mom.Services.Order.Daemon",
                 "sourceFolderName": "Af.Mom.Services.Order.Daemon.zip",
                 "destinationFolderName": "order\\bin",
@@ -137,7 +137,7 @@
             },
             {
                 "name": "MOM Process Gateway",
-                "copyAppSetting": false,
+                "copyAppSetting": true,
                 "projectName": "Af.Mom.Services.ProcessGateway.Daemon",
                 "sourceFolderName": "Af.Mom.Services.ProcessGateway.Daemon.zip",
                 "destinationFolderName": "processGateway\\bin",
@@ -147,7 +147,7 @@
             },
             {
                 "name": "MOM Dispatch",
-                "copyAppSetting": false,
+                "copyAppSetting": true,
                 "projectName": "Af.Mom.Services.Dispatch.Daemon",
                 "sourceFolderName": "Af.Mom.Services.Dispatch.Daemon.zip",
                 "destinationFolderName": "dispatch\\bin",
