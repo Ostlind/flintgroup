@@ -11,8 +11,7 @@ if ( $null -eq $configuration) {
     return;
 }
 
-# Login to Azure 
-Connect-Azure
+
 
 Write-Information "Successfully logged in to Azure"
 

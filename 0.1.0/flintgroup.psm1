@@ -64,7 +64,6 @@ function Get-ConfigurationObject {
 
 }
 
-
 function WaitUntilServices($searchString, $status) {
     # Get all services where DisplayName matches $searchString and loop through each of them.
     foreach ($service in (Get-Service -DisplayName $searchString)) {
@@ -84,7 +83,9 @@ function New-Daemon {
 
     Write-Information "Couldn't find any daemon with name $($Daemon.name)..."
 
-    $binaryPath = Join-Path -Path $Daemon.destinationFolderName -ChildPath $Daemon.exeName
+    $destination = Join-BasePathAndDestination -type daemon -Destination $Daemon.destinationFolderName 
+
+    $binaryPath = Join-Path -Path $destination -ChildPath $Daemon.exePath
 
     $service = New-Service -Name $Daemon.name -BinaryPathName $binaryPath  -DisplayName $Daemon.displayName -StartupType Automatic  
 
@@ -120,7 +121,6 @@ function Stop-Daemon {
     Catch {
 
     }
-
 }
 
 function Copy-ProjectFiles {
@@ -143,12 +143,10 @@ function Copy-ProjectFiles {
 
     $tempFolderName = 'C:\Temp\filesToCopy'
 
-
     Expand-Archive $Source -DestinationPath $tempFolderName -Force
     
     if ($CopyAppSetting.IsPresent) {
         
-
         if (!(Test-Path -Path $Destination)) {
             New-Item -Path $Destination -Force
         }
@@ -162,7 +160,6 @@ function Copy-ProjectFiles {
         }
 
         Copy-Item  $tempFolderName\* -Destination "$Destination\" -Exclude "appsettings.json" -Recurse -Force 
-        
     }
 
     Remove-Item -Path $tempFolderName\* -Confirm:$false -Force -Recurse
@@ -181,7 +178,10 @@ function Join-BasePathAndDestination {
         $Destination
     )
 
-    $configuration = Get-ConfigurationObject -ConfigFilePath '../config/config.json'
+
+    $root = Split-Path  $PSScriptRoot -Parent
+
+    $configuration = Get-ConfigurationObject -ConfigFilePath "$root/config/config.json"
 
     Join-Path -Path $configuration.$type.basePath -ChildPath $Destination
 
@@ -193,17 +193,12 @@ function Get-DefaultTypeConfiguration {
         [ValidateSet("daemon", "api")]
         [PSCustomObject]
         $type
-
     )
 
-    $configuration = Get-ConfigurationObject -ConfigFilePath './config/config.json'
+    $configuration = Get-ConfigurationObject -ConfigFilePath "/config/config.json"
 
     return $configuration.$type
 }
-
-
-
-
 
 function Start-ProcessApis {
     param (
@@ -256,11 +251,12 @@ function Get-ApiWebApplication {
         $ApiApplication
     )
 
-
     $webApplication = Get-WebApplication -Name $ApiApplication.name
 
     if ($null -eq $webApplication) {
+        
         Write-Information "Couldn't find a webapplication with name $($ApiApplication.name)..."
+        
         return "WebApplication does not exist..." 
     }
 
@@ -284,6 +280,7 @@ function New-ApiWebApplication {
 
     if ($null -ne $apiApplication) {
         Write-Information "Api application already exist..."
+        
         return
     }
 
@@ -335,7 +332,7 @@ function Start-ProcessDaemons {
 
         # Start the database migration to the latest version.
 
-        Start-Migration -DaemonProjectName $project.projectName -DaemonBinPath  $destination
+        $project.dbContexts | Start-Migration -DaemonNameSpace $project.projectName -DaemonBinPath  $destination
 
 
         # ToDo Change-Appsetting
@@ -347,6 +344,51 @@ function Start-ProcessDaemons {
 
 }
 
+function Start-ProcessMigrations {
+    param (
+
+        [Parameter(Mandatory = $true)]
+        [PSCustomObject[]]
+        $Projects
+    )
+
+    $Projects | ForEach-Object {
+
+        $project = $_
+
+
+        # The folder where daemons files are located.
+        $destination = Join-Path -Path $project.basePath  -ChildPath $project.destinationFolderName  
+
+        # Start the database migration to the latest version.
+
+        $project.dbContexts | Start-Migration -DaemonNameSpace $project.projectName -DaemonBinPath  $destination
+        
+    }
+
+}
+
+function Start-Daemon {
+
+    param(
+        # Name of daemon/service
+        [Parameter(Mandatory=$true)]
+        [string]
+        $ServiceName
+    )
+
+    $service = Get-Service -Name $ServiceName
+
+    if($null -eq $service)
+    {
+        Write-Error "Could not find service with name: $ServiceName..."
+    }
+
+    Start-Service -Name $ServiceName 
+
+    Write-Information "Started service $ServiceName...."
+}
+
 function Start-Migration { 
     param(
         # Parameter help description
@@ -356,28 +398,36 @@ function Start-Migration {
     
         [Parameter(Mandatory = $true)]
         [ValidateScript( {Test-Path $_ })]
-        [String]
-        $DaemonBinPath
+        [string]
+        $DaemonBinPath,
+
+       [Parameter(Mandatory = $true,
+                  ValueFromPipeline=$true)]
+       [string]
+       $DbContextClassName
+
+
     )
 
     Push-Location
 
     Write-Information "Setting location to: '$DaemonBinPath'..."
 
+    $root = Split-Path -Path $PSScriptRoot -Parent
     Set-Location -Path $DaemonBinPath
 
     $depsfile = ".\$DaemonNameSpace.deps.json" 
     $runtimeconfig = ".\$DaemonNameSpace.runtimeconfig.json" 
-    $ef = '..\artifacts\ef\ef.dll' 
+    $ef = "$root\artifacts\ef\ef.dll" 
     $assembly = ".\$DaemonNameSpace.dll" 
     ${root-namespace} = "$DaemonNameSpace" 
     $projectDir = '\.'
      
-    dotnet exec --depsfile $depsfile --runtimeconfig $runtimeconfig  $ef  database update --assembly $assembly --root-namespace ${root-namespace} --project-dir $projectDir --verbose    
+    dotnet exec --depsfile $depsfile --runtimeconfig $runtimeconfig  $ef  database update --assembly $assembly --root-namespace ${root-namespace} --project-dir $projectDir --context $DbContextClassName --verbose    
 
     Pop-Location
 
     Write-Information "Setting location to: '$((Get-Location).path)'..."
 }
 
-Export-ModuleMember -Function Connect-Azure, Get-Artifact, Get-ConfigurationObject, Stop-Daemon, Copy-ProjectFiles, New-Daemon, Join-BasePathAndDestination, Start-ProcessApis, Start-ProcessDaemons, Get-DefaultTypeConfiguration, Start-Migration
+Export-ModuleMember -Function Connect-Azure, Get-Artifact, Get-ConfigurationObject, Stop-Daemon, Copy-ProjectFiles, New-Daemon, Join-BasePathAndDestination, Start-ProcessApis, Start-ProcessDaemons, Get-DefaultTypeConfiguration, Start-Migration, Start-Daemon, Start-ProcessMigrations

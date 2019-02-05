@@ -4,6 +4,51 @@
         "instance": "https://722610.visualstudio.com/",
         "projectName": "Mom Services"
     },
+
+    "migration" : {
+
+        "projects" : [
+            {
+                "basePath": "C:\\inetpub\\wwwroot",
+                "projectName": "Af.Mom.Services.Resource.Api",
+                "destinationFolderName": "resource",
+                "dbContexts" : [ "ResourceDbContext" ]
+            },
+            {
+                "basePath" : "C:\\MomServices",
+                "projectName": "Af.Mom.Services.Executor.Daemon",
+                "destinationFolderName": "executor\\bin",
+                "dbContexts" : [ "ExecutorDbContext" ]
+            },
+            {
+                "basePath" : "C:\\MomServices",
+                "projectName": "Af.Mom.Services.Executor.Daemon",
+                "destinationFolderName": "executor\\bin",
+                "dbContexts" : [ "ExecutorDbContext" ]
+            },
+            {
+                "basePath" : "C:\\MomServices",
+                "projectName": "Af.Mom.Services.Order.Daemon",
+                "destinationFolderName": "order\\bin",
+                "dbContexts" : ["OrderReadDbContext", "OrderDbContext"]
+                 
+            },
+            {
+                "basePath" : "C:\\MomServices",
+                "projectName": "Af.Mom.Services.ProcessGateway.Daemon",
+                "destinationFolderName": "processGateway\\bin",
+                "dbContexts": ["ProcessGatewayDbContext" ]
+            },
+            {
+                "basePath" : "C:\\MomServices",
+                "projectName": "Af.Mom.Services.Dispatch.Daemon",
+                "destinationFolderName": "dispatch\\bin",
+                "dbContexts": [ "DispatchReadDbContext", "DispatchDbContext"]
+            }
+        ]
+
+    },
+
     "api": {
 
         
@@ -51,7 +96,7 @@
                 "applicationPool": "defaultAppPool"
             },
             {
-                "name": "Resource",
+                "name": "resource",
                 "copyAppSetting": false,
                 "projectName": "Af.Mom.Services.Resource.Api",
                 "sourceFolderName": "Af.Mom.Services.Resource.Api.zip",
@@ -75,7 +120,7 @@
                 "projectName": "Af.Mom.Services.Executor.Daemon",
                 "sourceFolderName": "Af.Mom.Services.Executor.Daemon.zip",
                 "destinationFolderName": "executor\\bin",
-                "exeName" : "Af.Mom.Services.Executor.Daemon.exe",
+                "exePath" : "Af.Mom.Services.Executor.Daemon.exe",
                 "group": "executor",
                 "displayName": "AF MOM Services - Executor"
             },
@@ -85,7 +130,7 @@
                 "projectName": "Af.Mom.Services.Order.Daemon",
                 "sourceFolderName": "Af.Mom.Services.Order.Daemon.zip",
                 "destinationFolderName": "order\\bin",
-                "exePath" : "Af.Mom.Services.Executor.Daemon.exe",
+                "exePath" : "Af.Mom.Services.Order.Daemon.exe",
                 "group": "order",
                 "displayName": "AF MOM Services - Order"
                  
@@ -113,3 +158,4 @@
         ]
     }
 }
+
