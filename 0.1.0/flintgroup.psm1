@@ -153,21 +153,23 @@ function Copy-ProjectFiles {
     if ($CopyAppSetting.IsPresent) {
         
         if (!(Test-Path -Path $Destination)) {
-            New-Item -Path $Destination -Force
+           
+            New-Item -Path $Destination -Force -ItemType Directory
         }
 
-        Copy-Item "$tempFolderName\*" -Destination "$Destination\"  -Recurse
+        Get-ChildItem -Path $tempFolderName -Recurse | Copy-Item -Destination $Destination -Force
     }
     else {
        
         if (!(Test-Path -Path $Destination)) {
+           
             New-Item -Path $Destination -Force -ItemType Directory
         }
 
-        Copy-Item  "$tempFolderName\*" -Destination "$Destination\" -Exclude "appsettings.json" -Recurse -Force 
+        Get-ChildItem -Path $tempFolderName -Exclude "appsettings.json" -Recurse | Copy-Item -Destination $Destination -Force
     }
 
-    Remove-Item -Path $tempFolderName\* -Confirm:$false -Force -Recurse
+    Remove-Item -Path $tempFolderName -Confirm:$false -Force -Recurse
 }
 
 function Join-BasePathAndDestination {

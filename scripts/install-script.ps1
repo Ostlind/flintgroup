@@ -7,8 +7,8 @@ $root = Split-Path  $PSScriptRoot -Parent
 
 #Import modules. 
 #Todo Change this to flintgroup later.
-Import-Module "$root" -Verbose -Global
-Import-Module WebAdministration -Verbose -Global
+Import-Module "$root" -Global
+Import-Module WebAdministration -Global
 
 
 # Login to Azure 
