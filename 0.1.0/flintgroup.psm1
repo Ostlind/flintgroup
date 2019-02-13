@@ -17,6 +17,8 @@ function  Connect-Azure {
 
     }
 
+    $account = az account list --query "[?contains( @.name, '$subscriptionName')] | [0]" | ConvertFrom-Json
+
     Write-Host "User  $($account.user.name) is now logged in..." 
 
     $account

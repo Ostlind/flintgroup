@@ -24,8 +24,7 @@ if ($useLatest -and $shouldDownload) {
 
     $version = Get-ArtifactVersion -Feed $feed;
 
-    Write-Host "Downloading artifact: $name, version: $version..." -BackgroundColor Green
-
+    Write-Host "Downloading artifact: $name, version: $version..." -BackgroundColor Yellow
     Get-Artifact -Feed $feed `
         -ArtifactsSourcePath $daemonArtifactsSourcePath `
         -Name $name `
