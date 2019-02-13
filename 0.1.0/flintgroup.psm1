@@ -17,9 +17,33 @@ function  Connect-Azure {
 
     }
 
-    Write-Verbose "User  $($account.user.name) is now logged in..." 
+    Write-Host "User  $($account.user.name) is now logged in..." 
+
+    $account
         
 }
+
+function Get-ArtifactVersion
+{
+    param(
+        [Parameter(Mandatory = $true)]
+        [String]
+        $Feed
+    )
+
+    $user = az account show --query user.name
+    $root = Split-Path  $PSScriptRoot -Parent
+    $configuration = Get-ConfigurationObject -ConfigFilePath "$root/config/config.json"
+    $token = $configuration.azure.token
+    $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $user, $token)))
+    $organisation = $configuration.azure.organisation
+    $uri = "https://feeds.dev.azure.com/$organisation/_apis/packaging/Feeds/$Feed/packages/"
+
+    $result = Invoke-RestMethod -Uri $uri -Method Get -ContentType "application/json" -Headers @{Authorization = ("Basic {0}" -f $base64AuthInfo)}
+
+    return $result.value[1].versions[0].version
+}
+
 
 function Get-Artifact {
 
@@ -47,7 +71,8 @@ function Get-Artifact {
         $Version
     )
 
-    az artifacts universal download --organization $Organisation --feed $Feed --name $Name --version $Version --path $ArtifactsSourcePath
+
+    az artifacts universal download --organization $Organisation --feed $Feed --name $Name --version $version --path $ArtifactsSourcePath
 
 }
 function Get-ConfigurationObject {
@@ -67,6 +92,8 @@ function Get-ConfigurationObject {
 function WaitUntilServices($searchString, $status) {
     # Get all services where DisplayName matches $searchString and loop through each of them.
     foreach ($service in (Get-Service -DisplayName $searchString)) {
+
+        $service.stop()
         # Wait for the service to reach the $status or a maximum of 30 seconds
         $service.WaitForStatus($status, '00:00:30')
     }
@@ -113,15 +140,22 @@ function Stop-Daemon {
             return "Daemon service does not exist" 
         }
 
+        Write-Host "Stopping service: '$($service.name)'..." -ForegroundColor Green
+
         $service.Stop()
 
-        $service.WaitForStatus('Stopped', '00:00:10') 
+        $service.WaitForStatus('Stopped', '00:00:30') | Out-Null
+
+        Write-Host "Service: '$($service.name)' has stopped..." -ForegroundColor Green
+
+        $service
 
     }
     Catch {
 
     }
 }
+
 
 function Copy-ProjectFiles {
 
@@ -143,8 +177,7 @@ function Copy-ProjectFiles {
 
     $tempFolderName = 'C:\Temp\filesToCopy'
 
-    if(Test-Path -Path $tempFolderName)
-    {
+    if (Test-Path -Path $tempFolderName) {
         Remove-Item $tempFolderName -Force -Recurse
     }
 
@@ -152,18 +185,16 @@ function Copy-ProjectFiles {
     
     if ($CopyAppSetting.IsPresent) {
         
-        if(!(Test-Path -Path $Destination))
-        {
+        if (!(Test-Path -Path $Destination)) {
             New-Item -Path $Destination -ItemType Directory
         }
 
-        Remove-Item "$Destination\*" -Force -Confirm:$false -Recurse 
+        Remove-Item "$Destination\*"  -Confirm:$false -Recurse -Force 
         Copy-Item "$tempFolderName\*" -Destination $Destination  -Recurse -Container
     }
     else {
 
-        if(!(Test-Path -Path $Destination))
-        {
+        if (!(Test-Path -Path $Destination)) {
             New-Item -Path $Destination -ItemType Directory
         }
 
@@ -209,6 +240,24 @@ function Get-DefaultTypeConfiguration {
     return $configuration.$type
 }
 
+function Stop-AppPool ($webAppPoolName, [int]$secs) {
+    $retvalue = $false
+    $wsec = (get-date).AddSeconds($secs)
+    Stop-WebAppPool -Name $webAppPoolName
+    Write-Output "$(Get-Date) waiting up to $secs seconds for the WebAppPool '$webAppPoolName' to stop"
+    $poolNotStopped = $true
+    while (((get-date) -lt $wsec) -and $poolNotStopped) {
+        $pstate = Get-WebAppPoolState -Name $webAppPoolName
+        if ($pstate.Value -eq "Stopped") {
+            Write-Output "$(Get-Date): WebAppPool '$webAppPoolName' is stopped"
+            $poolNotStopped = $false
+            $retvalue = $true
+        }
+    }
+    return $retvalue
+}
+
+
 function Start-ProcessApis {
     param (
 
@@ -221,6 +270,8 @@ function Start-ProcessApis {
         [string]
         $ArtifactsFolder
     )
+
+    Stop-AppPool "DefaultAppPool" 30
 
     $Projects | ForEach-Object {
 
@@ -250,6 +301,7 @@ function Start-ProcessApis {
 
     Write-Information "Finished processing web applications"
 
+    Start-Process -FilePath C:\Windows\System32\iisreset.exe -ArgumentList /RESTART
 }
 function Get-ApiWebApplication {
 
@@ -270,7 +322,6 @@ function Get-ApiWebApplication {
     }
 
     $webApplication
-
 }
 function New-ApiWebApplication { 
 
@@ -314,6 +365,14 @@ function Start-ProcessDaemons {
         $ArtifactsFolder
     )
 
+    $Project | Select-Object -Property name | ForEach-Object { 
+        
+        Get-service -Name $_ | ForEach-Object { if ($_.CanStop) { $_.Stop(); $_.WaitForStatus('Stopped', '00:00:30')} } -ErrorAction SilentlyContinue
+    
+    }
+    
+    $Projects | Select-Object -Property projectName | ForEach-Object {  Stop-Process -Name $_.projectName -Force }
+
     $Projects | ForEach-Object {
 
         $project = $_
@@ -326,7 +385,7 @@ function Start-ProcessDaemons {
         $service = $null
 
         # Get the service. 
-        $service = Stop-Daemon -Daemon $project 
+        $service = Get-Service -Name $project.name 
            
         if ("Daemon service does not exist" -eq $service) {
 
@@ -338,12 +397,10 @@ function Start-ProcessDaemons {
         $destination = Join-BasePathAndDestination -type daemon -Destination $project.destinationFolderName  
 
         Copy-ProjectFiles -Source $sourceFolder -Destination $destination -CopyAppSetting:$project.CopyAppsetting
-
-        # Start the daemons again. 
-        Start-Daemon -ServiceName $project.name 
         
     }
 
+    Get-service -Name "MOM*" | ForEach-Object { if ($_.Status -eq 'Stopped') { $_.Start(); $_.WaitForStatus('Running', '00:00:30')} }
 }
 
 function Start-ProcessMigrations {
@@ -364,10 +421,9 @@ function Start-ProcessMigrations {
 
         # Start the database migration to the latest version.
 
-        $project.dbContexts | Start-Migration -DaemonNameSpace $project.projectName -DaemonBinPath  $destination
+        Start-Migration -DaemonNameSpace $project.projectName -DaemonBinPath  $destination -DbContextClassName $project.dbContexts
         
     }
-
 }
 
 function Start-Daemon {
@@ -402,7 +458,7 @@ function Start-Migration {
         [string]
         $DaemonBinPath,
 
-        [Parameter(Mandatory, ValueFromPipeline)]
+        [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
         [string[]]
         $DbContextClassName
 
@@ -423,11 +479,9 @@ function Start-Migration {
     ${root-namespace} = "$DaemonNameSpace" 
     $projectDir = '\.'
 
-    
     $DbContextClassName | ForEach-Object {
     
         dotnet exec --depsfile $depsfile --runtimeconfig $runtimeconfig  $ef  database update --assembly $assembly --root-namespace ${root-namespace} --project-dir $projectDir --context $_ --verbose    
-
     }
 
     Pop-Location
@@ -435,4 +489,4 @@ function Start-Migration {
     Write-Information "Setting location to: '$((Get-Location).path)'..."
 }
 
-Export-ModuleMember -Function Connect-Azure, Get-Artifact, Get-ConfigurationObject, Stop-Daemon, Copy-ProjectFiles, New-Daemon, Join-BasePathAndDestination, Start-ProcessApis, Start-ProcessDaemons, Get-DefaultTypeConfiguration, Start-Migration, Start-Daemon, Start-ProcessMigrations
+Export-ModuleMember -Function Connect-Azure, Get-Artifact, Get-ConfigurationObject, Stop-Daemon, Copy-ProjectFiles, New-Daemon, Join-BasePathAndDestination, Start-ProcessApis, Start-ProcessDaemons, Get-DefaultTypeConfiguration, Start-Migration, Start-Daemon, Start-ProcessMigrations, Get-ArtifactVersion

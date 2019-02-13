@@ -57,9 +57,9 @@ Copy-ProjectFiles -Source $sourceFolder -Destination $destination -CopyAppSettin
 Copy-Item -Path $tempFolderName -Destination "C:\temp\newolder" -Container
 Copy-Item -Path "$tempFolderName" -Destination "C:\temp\newolder1\" -Container -Recurse
 
-Set-PSBreakpoint -Script ..\0.1.0\flintgroup.psm1 -Line 155
-Set-PSBreakpoint -Script ..\0.1.0\flintgroup.psm1 -Line 160
-Set-PSBreakpoint -Script ..\0.1.0\flintgroup.psm1 -Line 148
+Set-PSBreakpoint -Script ..\0.1.0\flintgroup.psm1 -Line 427
+Set-PSBreakpoint -Script ..\0.1.0\flintgroup.psm1 -Line 367
+Set-PSBreakpoint -Script ..\0.1.0\flintgroup.psm1 -Line 330
 
 Set-locstion C:\temp
 
@@ -70,3 +70,8 @@ Copy-Item "$tempFolderName\*" -Destination C:\temp\newfolder -Recurse -Container
 
 Remove-Item C:\temp\newfolder\* -Force -Confirm:$false -Recurse 
 Copy-Item "$tempFolderName\*" -Destination C:\temp\newfolder -Recurse -Container 
+
+
+
+Get-service -Name "MOM*" | ForEach-Object { if($_.CanStop){ $_.Stop(); $_.WaitForStatus('Stopped', '00:00:30') } }
+Get-service -Name "MOM*" | ForEach-Object { if($_.Status -eq 'Stopped'){ $_.Start(); $_.WaitForStatus('Running', '00:00:30')} }

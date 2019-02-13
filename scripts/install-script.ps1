@@ -12,13 +12,13 @@ Import-Module WebAdministration -Global
 
 
 # Login to Azure 
-Connect-Azure
+ $account = Connect-Azure
 
 # Load the configuration file.
 $configuration = Get-ConfigurationObject -ConfigFilePath "$root\config\config.json"
 
-#& '.\update-daemon-script.ps1' -Configuration $configuration.daemon
+&"$root\scripts\update-daemon-script.ps1" -Configuration $configuration.daemon
 
-& '.\update-api-script.ps1' -Configuration $configuration.api
+&"$root\scripts\update-api-script.ps1" -Configuration $configuration.api
 
-#& '.\update-migration-script.ps1' -Configuration $configuration.migration
+&"$root\scripts\update-migration-script.ps1" -Configuration $configuration.migration

@@ -1,5 +1,6 @@
 {
     "azure": {
+        "organisation": "722610",
         "token": "kvr43qxoge46brgso7i7dqqvqehavuexsabgffxlrwgmxunoae6q",
         "instance": "https://722610.visualstudio.com/",
         "projectName": "Mom Services"
@@ -55,9 +56,10 @@
         "basePath": "C:\\inetpub\\wwwroot",
         "artifactsSourcePath": "C:\\inetpub\\wwwroot\\drop",
         "feed": "ArtifactsFeed",
-        "download" : false,
+        "download" : true,
+        "useLatest": true,
         "organisation": "https://722610.visualstudio.com/",
-        "name": "flintgroup-api-artifact",
+        "name": "moms-api-artifact",
         "version": "0.1.0",
         "projects": [
             {
@@ -111,9 +113,10 @@
         "basePath" : "C:\\MomServices",
         "artifactsSourcePath": "C:\\MomServices\\artifacts\\drop",
         "feed": "ArtifactsFeed",
-        "download": false,
+        "download": true,
+        "useLatest": true,
         "organisation": "https://722610.visualstudio.com/",
-        "name": "flintgroup-daemon-artifact",
+        "name": "moms-daemon-artifact",
         "version": "0.1.0",
         "projects": [
             {

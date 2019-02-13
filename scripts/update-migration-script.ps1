@@ -10,8 +10,6 @@ if ( $null -eq $configuration) {
     return;
 }
 
-Write-Information "Successfully logged in to Azure"
-
 # Set variables from config 
 $projects = $Configuration.projects
 
