@@ -2,7 +2,7 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'SilentlyContinue'
 $InformationPreference = 'Continue' 
-Write-Verbose "Installing modules..."
+Write-Host "Installing modules..." -BackgroundColor Yellow
 $root = Split-Path  $PSScriptRoot -Parent
 
 #Import modules. 

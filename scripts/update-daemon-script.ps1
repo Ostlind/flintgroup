@@ -24,7 +24,7 @@ if ($useLatest -and $shouldDownload) {
 
     $version = Get-ArtifactVersion -Feed $feed;
 
-    Write-Host "Downloading artifact: $name, version: $version..."
+    Write-Host "Downloading artifact: $name, version: $version..." -BackgroundColor Green
 
     Get-Artifact -Feed $feed `
         -ArtifactsSourcePath $daemonArtifactsSourcePath `
@@ -41,7 +41,7 @@ if ($shouldDownload -and (!useLatest)) {
 
     while ($version -notmatch '^\d{1,4}.\d{1,4}.\d{1,4}$' ) {
 
-        Write-Error "Version number '($version)' is in the wrong format. Use i.e (0.0.0)..."
+        Write-Host "Version number '($version)' is in the wrong format. Use i.e (0.0.0)..." -BackgroundColor Yellow
         $version = Read-Host -Prompt "Please enter artifact ($name) version (in format 0.0.0)..."
     }
 
@@ -53,11 +53,9 @@ if ($shouldDownload -and (!useLatest)) {
         -Version $version
 }
 
-
-
 Start-ProcessDaemons -Projects $projects -ArtifactsFolder $daemonArtifactsSourcePath
 
 $project | ForEach-Object { Start-Daemon -ServiceName $_.name}
 
-Write-Verbose "Fetched configuration..."
+Write-Host "Done processing daemons..." -BackgroundColor Yellow
  
